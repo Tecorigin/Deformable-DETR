@@ -122,6 +122,7 @@ def get_args_parser():
     parser.add_argument('--eval', action='store_true')
     parser.add_argument('--num_workers', default=2, type=int)
     parser.add_argument('--cache_mode', default=False, action='store_true', help='whether to cache images on memory')
+    parser.add_argument('--num_classes', default=91, type=int) # By default, Model was trained on 91 classes
 
     return parser
 
@@ -225,12 +226,24 @@ def main(args):
         model_without_ddp.detr.load_state_dict(checkpoint['model'])
 
     output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
     if args.resume:
         if args.resume.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
                 args.resume, map_location='cpu', check_hash=True)
         else:
+            ## LOAD WEIGHTS INTO MODEL
             checkpoint = torch.load(args.resume, map_location='cpu')
+            # When number of classes changes, modify the model as well. Otherwise, keep original weights ! 
+            if args.num_classes != 91 or args.dataset_file != 'coco':
+                print(f"Deleting last linear layer weights as num_classes is different {args.num_classes} than expected for coco (91)")
+                keys = list(checkpoint['model'].keys())
+                for i in keys:
+                    if 'class_embed' in i: 
+                        del checkpoint["model"][i]
+            else:
+                print("Keeping all the original weights.")
+
         missing_keys, unexpected_keys = model_without_ddp.load_state_dict(checkpoint['model'], strict=False)
         unexpected_keys = [k for k in unexpected_keys if not (k.endswith('total_params') or k.endswith('total_ops'))]
         if len(missing_keys) > 0:
@@ -239,12 +252,12 @@ def main(args):
             print('Unexpected Keys: {}'.format(unexpected_keys))
         if not args.eval and 'optimizer' in checkpoint and 'lr_scheduler' in checkpoint and 'epoch' in checkpoint:
             import copy
-            p_groups = copy.deepcopy(optimizer.param_groups)
-            optimizer.load_state_dict(checkpoint['optimizer'])
-            for pg, pg_old in zip(optimizer.param_groups, p_groups):
-                pg['lr'] = pg_old['lr']
-                pg['initial_lr'] = pg_old['initial_lr']
-            print(optimizer.param_groups)
+            # p_groups = copy.deepcopy(optimizer.param_groups)
+            # optimizer.load_state_dict(checkpoint['optimizer'])
+            # for pg, pg_old in zip(optimizer.param_groups, p_groups):
+            #     pg['lr'] = pg_old['lr']
+            #     pg['initial_lr'] = pg_old['initial_lr']
+            # print(optimizer.param_groups)
             lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
             # todo: this is a hack for doing experiment that resume from checkpoint and also modify lr scheduler (e.g., decrease lr in advance).
             args.override_resumed_lr_drop = True
@@ -253,7 +266,7 @@ def main(args):
                 lr_scheduler.step_size = args.lr_drop
                 lr_scheduler.base_lrs = list(map(lambda group: group['initial_lr'], optimizer.param_groups))
             lr_scheduler.step(lr_scheduler.last_epoch)
-            args.start_epoch = checkpoint['epoch'] + 1
+            #args.start_epoch = checkpoint['epoch'] + 1
         # check the resumed model
         if not args.eval:
             test_stats, coco_evaluator = evaluate(
@@ -269,7 +282,8 @@ def main(args):
 
     print("Start training")
     start_time = time.time()
-    for epoch in range(args.start_epoch, args.epochs):
+    #for epoch in range(args.start_epoch, args.epochs):
+    for epoch in range(args.start_epoch, args.epochs + args.start_epoch):
         if args.distributed:
             sampler_train.set_epoch(epoch)
         train_stats = train_one_epoch(
@@ -321,6 +335,6 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Deformable DETR training and evaluation script', parents=[get_args_parser()])
     args = parser.parse_args()
-    if args.output_dir:
-        Path(args.output_dir).mkdir(parents=True, exist_ok=True)
+    # if args.output_dir:
+    #     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
     main(args)

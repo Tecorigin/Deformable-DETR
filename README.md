@@ -1,5 +1,82 @@
 # Deformable DETR
 
+---
+
+## 📌 本仓库修改说明
+
+基于 [fundamentalvision/Deformable-DETR](https://github.com/fundamentalvision/Deformable-DETR) 官方代码，主要修改如下：
+
+### 🔧 适配 PyTorch 2.7 + CUDA 12.x
+| 文件 | 修改内容 |
+|------|---------|
+| models/ops/src/cuda/ms_deform_attn_cuda.cu | value.type() -> value.scalar_type()，废弃 API 替换 |
+| models/ops/src/cuda/ms_deform_im2col_cuda.cuh | THC/THCAtomics.cuh -> ATen/cuda/Atomic.cuh |
+| models/ops/src/ms_deform_attn.h | type().is_cuda() -> is_cuda() |
+| models/ops/setup.py | 删除过时 NVCC flag __CUDA_NO_HALF* |
+| util/misc.py | 删除 torchvision < 0.7 兼容代码 |
+
+### 🎯 添加自定义数据集微调
+| 文件 | 修改内容 |
+|------|---------|
+| main.py | 添加 --num_classes 参数；加载权重时自动删除分类头 |
+| models/deformable_detr.py | num_classes 改为从参数读取 |
+| datasets/coco.py | PATHS 改为自定义路径格式 |
+
+---
+
+## 🏆 训练比赛
+
+### 比赛规则
+
+**数据集：** PASCAL VOC 2007（完整20类）
+- 训练集：VOC2007 trainval（5,011张）
+- 测试集：VOC2007 test（4,952张）
+- 数据格式：已转为 COCO JSON 格式（data/voc_coco/）
+
+**评估指标：**  精度：AP@0.50:0.95 ，性能：imgs/s
+
+**参赛要求：**
+- 使用本仓库代码，使用data/voc_coco/数据集
+- 使用预训练模型进行微调(r50_deformable_detr_plus_iterative_bbox_refinement_plus_plus_two_stage-checkpoint.pth)
+- CUDA到SDAA代码的迁移(包含自定义算子在SDAA上的实现调用)，需在SDAA上进行微调训练
+- 禁止修改网络结构
+- 可自由修改：超参数（学习率、批量大小、训练轮数、权重衰减等）、数据增强策略
+- 其他参赛要求/代码提交规范见赛事主办方信息发布
+
+
+### 训练命令参考(仅做参考)
+
+```bash
+python main.py \
+    --dataset_file coco \
+    --coco_path ./data/voc_coco \
+    --output_dir exps/voc_finetune \
+    --num_classes 21 \
+    --resume ./r50_deformable_detr_plus_iterative_bbox_refinement_plus_plus_two_stage-checkpoint.pth \
+    --with_box_refine \
+    --two_stage \
+    --lr 2e-5 \
+    --lr_backbone 2e-6 \
+    --lr_drop 30 \
+    --epochs 50 \
+    --batch_size 12 \
+    --clip_max_norm 0.1 \
+    --weight_decay 1e-4
+```
+
+### 数据转换(默认已提供转换后数据集)
+
+VOC 原始数据转 COCO 格式：
+```bash
+python voc2coco.py \
+    --voc_path /path/to/VOC2007 \
+    --output_path ./data/voc_coco \
+    --train_split trainval \
+    --val_split test
+```
+
+---# Deformable DETR
+
 By [Xizhou Zhu](https://scholar.google.com/citations?user=02RXI00AAAAJ),  [Weijie Su](https://www.weijiesu.com/),  [Lewei Lu](https://www.linkedin.com/in/lewei-lu-94015977/), [Bin Li](http://staff.ustc.edu.cn/~binli/), [Xiaogang Wang](http://www.ee.cuhk.edu.hk/~xgwang/), [Jifeng Dai](https://jifengdai.org/).
 
 This repository is an official implementation of the paper [Deformable DETR: Deformable Transformers for End-to-End Object Detection](https://arxiv.org/abs/2010.04159).
