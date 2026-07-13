@@ -233,7 +233,7 @@ def main(args):
                 args.resume, map_location='cpu', check_hash=True)
         else:
             ## LOAD WEIGHTS INTO MODEL
-            checkpoint = torch.load(args.resume, map_location='cpu')
+            checkpoint = torch.load(args.resume, map_location='cpu',weights_only=False)
             # When number of classes changes, modify the model as well. Otherwise, keep original weights ! 
             if args.num_classes != 91 or args.dataset_file != 'coco':
                 print(f"Deleting last linear layer weights as num_classes is different {args.num_classes} than expected for coco (91)")
@@ -268,10 +268,10 @@ def main(args):
             lr_scheduler.step(lr_scheduler.last_epoch)
             #args.start_epoch = checkpoint['epoch'] + 1
         # check the resumed model
-        if not args.eval:
-            test_stats, coco_evaluator = evaluate(
-                model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
-            )
+        #if not args.eval:
+        #    test_stats, coco_evaluator = evaluate(
+        #        model, criterion, postprocessors, data_loader_val, base_ds, device, args.output_dir
+        #    )
     
     if args.eval:
         test_stats, coco_evaluator = evaluate(model, criterion, postprocessors,
