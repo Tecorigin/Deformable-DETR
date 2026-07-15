@@ -37,10 +37,10 @@
 
 **参赛要求：**
 - 使用本仓库代码，使用data/voc_coco/数据集
-- 使用预训练模型进行微调(r50_deformable_detr_plus_iterative_bbox_refinement_plus_plus_two_stage-checkpoint.pth)
+- 使用指定预训练模型进行微调(r50_deformable_detr_single_scale-checkpoint.pth)
 - CUDA到SDAA代码的迁移(包含自定义算子在SDAA上的实现调用)，需在SDAA上进行微调训练
-- 禁止修改网络结构
-- 可自由修改：超参数（学习率、批量大小、训练轮数、权重衰减等）、数据增强策略
+- 禁止修改网络结构，训练轮次固定在50轮
+- 可自由修改：超参数（学习率、批量大小、权重衰减等）、数据增强策略等
 - 其他参赛要求/代码提交规范见赛事主办方信息发布
 
 
@@ -52,14 +52,13 @@ python main.py \
     --coco_path ./data/voc_coco \
     --output_dir exps/voc_finetune \
     --num_classes 21 \
-    --resume ./r50_deformable_detr_plus_iterative_bbox_refinement_plus_plus_two_stage-checkpoint.pth \
-    --with_box_refine \
-    --two_stage \
+    --resume ./r50_deformable_detr_single_scale-checkpoint.pth \
+    --num_feature_levels 1 \
     --lr 2e-5 \
     --lr_backbone 2e-6 \
     --lr_drop 30 \
     --epochs 50 \
-    --batch_size 12 \
+    --batch_size 2 \
     --clip_max_norm 0.1 \
     --weight_decay 1e-4
 ```
