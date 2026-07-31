@@ -37,7 +37,7 @@
 
 **参赛要求：**
 - 使用本仓库代码，使用data/voc_coco/数据集
-- - 数据集位置必须是./data/voc_coco，权重目录必须在Deformable-DETR根目录下
+- 数据集位置必须是./data/voc_coco，权重目录必须在Deformable-DETR根目录下
 - 使用指定预训练模型进行微调(r50_deformable_detr_single_scale-checkpoint.pth)
 - CUDA到SDAA代码的迁移(包含自定义算子在SDAA上的实现调用)，需在SDAA上进行微调训练
 - 为了保证结果可复现性，请固定随机种子
