@@ -265,7 +265,8 @@ def main(args):
                 print('Warning: (hack) args.override_resumed_lr_drop is set to True, so args.lr_drop would override lr_drop in resumed lr_scheduler.')
                 lr_scheduler.step_size = args.lr_drop
                 lr_scheduler.base_lrs = list(map(lambda group: group['initial_lr'], optimizer.param_groups))
-            lr_scheduler.step(lr_scheduler.last_epoch)
+            #lr_scheduler.step(lr_scheduler.last_epoch)
+            lr_scheduler.last_epoch = 0; lr_scheduler.step()
             #args.start_epoch = checkpoint['epoch'] + 1
         # check the resumed model
         #if not args.eval:
