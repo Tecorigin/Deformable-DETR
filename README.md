@@ -43,7 +43,7 @@
 - 使用指定预训练模型进行微调(r50_deformable_detr_single_scale-checkpoint.pth)
 - CUDA到SDAA代码的迁移(包含自定义算子在SDAA上的实现调用)，需在SDAA上进行微调训练
 - 为了保证结果可复现性，请固定随机种子
-- 禁止修改网络结构，训练轮次固定在50轮
+- 禁止修改网络结构，训练轮次固定在20轮
 - 可自由修改：超参数（学习率、批量大小、权重衰减等）、数据增强策略等
 - 其他参赛要求/代码提交规范/见赛事主办方信息发布及模型适配指南
   
@@ -62,8 +62,8 @@ python main.py \
     --num_feature_levels 1 \
     --lr 2e-5 \
     --lr_backbone 2e-6 \
-    --lr_drop 30 \
-    --epochs 50 \
+    --lr_drop 14 \
+    --epochs 20 \
     --batch_size 2 \
     --clip_max_norm 0.1 \
     --weight_decay 1e-4
