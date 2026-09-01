@@ -46,7 +46,7 @@
 - 禁止修改网络结构，训练轮次固定在20轮
 - 禁止修改tecopytorch框架
 - 可自由修改：超参数（学习率、批量大小、权重衰减等）、数据增强策略等
-- 模型其他文件参考：https://github.com/Tecorigin/teco-modelzoo/blob/main/PyTorch/doc/PR.md
+- 模型其他新增文件参考PR.md：https://github.com/Tecorigin/teco-modelzoo/blob/main/PyTorch/doc/PR.md
 - 其他参赛要求/代码提交规范/见赛事主办方信息发布及模型适配指南（https://github.com/Tecorigin/teco-modelzoo/blob/main/PyTorch/doc/%E6%A8%A1%E5%9E%8B%E9%80%82%E9%85%8D%E6%8C%87%E5%8D%97.md）
   
 **数据集权重下载：**
