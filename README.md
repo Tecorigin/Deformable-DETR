@@ -45,7 +45,7 @@
 - 为了保证结果可复现性，请固定随机种子
 - 禁止修改网络结构，训练轮次固定在20轮
 - 可自由修改：超参数（学习率、批量大小、权重衰减等）、数据增强策略等
-- 其他参赛要求/代码提交规范/见赛事主办方信息发布及模型适配指南
+- 其他参赛要求/代码提交规范/见赛事主办方信息发布及模型适配指南（https://github.com/Tecorigin/teco-modelzoo/blob/main/PyTorch/doc/%E6%A8%A1%E5%9E%8B%E9%80%82%E9%85%8D%E6%8C%87%E5%8D%97.md）
   
 **数据集权重下载：**
 数据集与权重下载地址：http://wb.tecorigin.com:8082/repository/teco-customer-repo/EducationalTechnologyAssociation/data_ckpt.tar.gz
