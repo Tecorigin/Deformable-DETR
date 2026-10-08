@@ -1,0 +1,148 @@
+// SPDX-License-Identifier: Apache-2.0
+// Race-free FP32 deformable attention. Each value-gradient tile has one owner.
+#include <slave.h>
+#include <sdaa_runtime.h>
+#include <stdint.h>
+using namespace sdaa;
+
+struct Args {
+    const float *value, *locations, *weights, *grad_output;
+    float *output, *grad_value, *grad_locations, *grad_weights;
+    int batch, spatial, heads, channels, queries, levels, points;
+    int height[8], width[8], start[8];
+};
+constexpr int spatial_tile = 16;
+__local__ float work[spatial_tile * 16 + 6 * 16] __attribute__((aligned(64)));
+__device__ __attribute__((always_inline)) inline int minimum(int a, int b) { return a < b ? a : b; }
+__device__ __attribute__((always_inline)) inline int lower(float x) { int i = static_cast<int>(x); return i > x ? i - 1 : i; }
+__device__ __attribute__((always_inline)) inline float read_scalar(const float *p) { float x; memcpy(&x,p,4); return x; }
+__device__ __attribute__((always_inline)) inline void load_corner(const Args &a, int b, int h, int level, int x, int y,
+                            int channel, int count, float *buffer) {
+    for (int c=0;c<count;++c) buffer[c]=0;
+    if (x>=0 && x<a.width[level] && y>=0 && y<a.height[level]) {
+        size_t i=((static_cast<size_t>(b)*a.spatial+a.start[level]+y*a.width[level]+x)*a.heads+h)*a.channels+channel;
+        memcpy(buffer,a.value+i,count*4);
+    }
+}
+__device__ __attribute__((always_inline)) inline bool coordinates(const Args &a, size_t sample, int level,
+                            float &dx,float &dy,int &x0,int &y0) {
+    float xy[2]; memcpy(xy,a.locations+sample*2,8);
+    // Match the official PyTorch reference's two-stage grid normalization.
+    float grid_x=2*xy[0]-1,grid_y=2*xy[1]-1;
+    float x=__builtin_fmaf(grid_x+1,a.width[level]/2.f,-.5f);
+    float y=__builtin_fmaf(grid_y+1,a.height[level]/2.f,-.5f);
+    if (!(x>-1 && y>-1 && x<a.width[level] && y<a.height[level])) return false;
+    x0=lower(x); y0=lower(y); dx=x-x0; dy=y-y0;
+    return true;
+}
+__global__ void detr_forward(Args a) {
+    int tiles=(a.channels+15)/16;
+    size_t count=static_cast<size_t>(a.batch)*a.queries*a.heads*tiles;
+    for (size_t task=threadIdx;task<count;task+=32) {
+        int channel=(task%tiles)*16, nc=minimum(16,a.channels-channel);
+        size_t qh=task/tiles; int head=qh%a.heads, query=(qh/a.heads)%a.queries, batch=qh/(a.heads*a.queries);
+        float *sum=work,*v00=work+16,*v01=work+32,*v10=work+48,*v11=work+64;
+        for(int c=0;c<nc;++c) sum[c]=0;
+        for(int l=0;l<a.levels;++l) for(int p=0;p<a.points;++p) {
+            size_t sample=(qh*a.levels+l)*a.points+p;
+            float dx,dy; int x,y;
+            if(!coordinates(a,sample,l,dx,dy,x,y)) continue;
+            float w=read_scalar(a.weights+sample);
+            load_corner(a,batch,head,l,x,y,channel,nc,v00);
+            load_corner(a,batch,head,l,x+1,y,channel,nc,v01);
+            load_corner(a,batch,head,l,x,y+1,channel,nc,v10);
+            load_corner(a,batch,head,l,x+1,y+1,channel,nc,v11);
+            for(int c=0;c<nc;++c) {
+                float v=(1-dy)*((1-dx)*v00[c]+dx*v01[c])+dy*((1-dx)*v10[c]+dx*v11[c]);
+                sum[c]+=w*v;
+            }
+        }
+        memcpy(a.output+qh*a.channels+channel,sum,nc*4);
+    }
+}
+__global__ void detr_sampling_backward(Args a) {
+    size_t count=static_cast<size_t>(a.batch)*a.queries*a.heads*a.levels*a.points;
+    for(size_t sample=threadIdx;sample<count;sample+=32) {
+        size_t qh=sample/(a.levels*a.points);
+        int l=(sample/a.points)%a.levels,head=qh%a.heads,batch=qh/(a.heads*a.queries);
+        float dx,dy;int x,y;float gx=0,gy=0,gw=0;
+        if(coordinates(a,sample,l,dx,dy,x,y)) {
+            float weight=read_scalar(a.weights+sample);
+            float *v00=work,*v01=work+16,*v10=work+32,*v11=work+48,*g=work+64;
+            for(int c0=0;c0<a.channels;c0+=16) {
+                int nc=minimum(16,a.channels-c0);
+                memcpy(g,a.grad_output+qh*a.channels+c0,nc*4);
+                load_corner(a,batch,head,l,x,y,c0,nc,v00);
+                load_corner(a,batch,head,l,x+1,y,c0,nc,v01);
+                load_corner(a,batch,head,l,x,y+1,c0,nc,v10);
+                load_corner(a,batch,head,l,x+1,y+1,c0,nc,v11);
+                for(int c=0;c<nc;++c) {
+                    float v=(1-dy)*((1-dx)*v00[c]+dx*v01[c])+dy*((1-dx)*v10[c]+dx*v11[c]);
+                    gw+=g[c]*v;
+                    float go=g[c]*weight;
+                    gx=__builtin_fmaf(__builtin_fmaf(v01[c]-v00[c],1-dy,(v11[c]-v10[c])*dy),go,gx);
+                    gy=__builtin_fmaf(__builtin_fmaf(v10[c]-v00[c],1-dx,(v11[c]-v01[c])*dx),go,gy);
+                }
+            }
+            gx*=a.width[l];gy*=a.height[l];
+        }
+        float loc[2]={gx,gy};memcpy(a.grad_locations+sample*2,loc,8);memcpy(a.grad_weights+sample,&gw,4);
+    }
+}
+__global__ void detr_value_backward(Args a) {
+    int ct=(a.channels+15)/16,st=(a.spatial+spatial_tile-1)/spatial_tile;
+    size_t count=static_cast<size_t>(a.batch)*a.heads*ct*st;
+    for(size_t task=threadIdx;task<count;task+=32) {
+        int begin=(task%st)*spatial_tile,ns=minimum(spatial_tile,a.spatial-begin);
+        size_t hc=task/st;int c0=(hc%ct)*16,nc=minimum(16,a.channels-c0);
+        int head=(hc/ct)%a.heads,batch=hc/(ct*a.heads);
+        float *sum=work,*g=work+spatial_tile*16;
+        for(int i=0;i<ns*16;++i) sum[i]=0;
+        for(int query=0;query<a.queries;++query) {
+            size_t qh=(static_cast<size_t>(batch)*a.queries+query)*a.heads+head;
+            memcpy(g,a.grad_output+qh*a.channels+c0,nc*4);
+            for(int l=0;l<a.levels;++l) for(int p=0;p<a.points;++p) {
+                size_t sample=(qh*a.levels+l)*a.points+p;
+                float dx,dy;int x,y;
+                if(!coordinates(a,sample,l,dx,dy,x,y)) continue;
+                float w=read_scalar(a.weights+sample);
+                for(int iy=0;iy<2;++iy) for(int ix=0;ix<2;++ix) {
+                    int xx=x+ix,yy=y+iy;
+                    if(xx<0||yy<0||xx>=a.width[l]||yy>=a.height[l]) continue;
+                    int spatial=a.start[l]+yy*a.width[l]+xx;
+                    if(spatial<begin||spatial>=begin+ns) continue;
+                    float coeff=w*(ix?dx:1-dx)*(iy?dy:1-dy);
+                    for(int c=0;c<nc;++c) sum[(spatial-begin)*16+c]+=coeff*g[c];
+                }
+            }
+        }
+        for(int i=0;i<ns;++i) {
+            size_t offset=((static_cast<size_t>(batch)*a.spatial+begin+i)*a.heads+head)*a.channels+c0;
+            memcpy(a.grad_value+offset,sum+i*16,nc*4);
+        }
+    }
+}
+static bool valid(const Args &a) {
+    if(a.batch<1||a.spatial<1||a.heads<1||a.channels<1||a.queries<1||a.levels<1||a.levels>8||a.points<1) return false;
+    int total=0;
+    for(int l=0;l<a.levels;++l) {
+        if(a.height[l]<1||a.width[l]<1||a.start[l]!=total) return false;
+        int64_t size=static_cast<int64_t>(a.height[l])*a.width[l];
+        if(size>a.spatial-total) return false;
+        total+=size;
+    }
+    return total==a.spatial&&a.value&&a.locations&&a.weights;
+}
+extern "C" __attribute__((visibility("default"))) int detr_argument_size(){return sizeof(Args);}
+extern "C" __attribute__((visibility("default"))) int detr_attention_forward(const Args *a,void *stream){
+    if(!a||!valid(*a)||!a->output)return -1;
+    detr_forward<<<1,reinterpret_cast<sdaaStream_t>(stream)>>>(*a);
+    return static_cast<int>(sdaaGetLastError());
+}
+extern "C" __attribute__((visibility("default"))) int detr_attention_backward(const Args *a,void *stream){
+    if(!a||!valid(*a)||!a->grad_output||!a->grad_value||!a->grad_locations||!a->grad_weights)return -1;
+    detr_sampling_backward<<<1,reinterpret_cast<sdaaStream_t>(stream)>>>(*a);
+    int code=static_cast<int>(sdaaGetLastError());if(code)return code;
+    detr_value_backward<<<1,reinterpret_cast<sdaaStream_t>(stream)>>>(*a);
+    return static_cast<int>(sdaaGetLastError());
+}

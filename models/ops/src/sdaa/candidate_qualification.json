@@ -1,0 +1,358 @@
+{
+ "passed": true,
+ "atol": 2e-05,
+ "rtol": 2e-05,
+ "cases": [
+  {
+   "name": "single_scale",
+   "sizes": [
+    [
+     3,
+     5
+    ]
+   ],
+   "batch": 1,
+   "heads": 2,
+   "channels": 16,
+   "queries": 7,
+   "points": 4,
+   "comparisons": {
+    "output": {
+     "passed": true,
+     "max_abs_error": 4.76837158203125e-07,
+     "max_tolerance_ratio": 0.005542641971260309
+    },
+    "value_gradient": {
+     "passed": true,
+     "max_abs_error": 4.76837158203125e-07,
+     "max_tolerance_ratio": 0.007937764748930931
+    },
+    "location_gradient": {
+     "passed": true,
+     "max_abs_error": 0.0,
+     "max_tolerance_ratio": 0.0
+    },
+    "weight_gradient": {
+     "passed": true,
+     "max_abs_error": 4.76837158203125e-07,
+     "max_tolerance_ratio": 0.00933092925697565
+    }
+   },
+   "forward_seconds": 0.0009403405711054802,
+   "backward_seconds": 0.00046423543244600296,
+   "profiler_event_names": [
+    "_Attention",
+    "_AttentionBackward",
+    "aten::detach",
+    "aten::empty",
+    "aten::empty_like",
+    "aten::empty_strided",
+    "aten::resolve_conj",
+    "aten::resolve_neg",
+    "aten::to",
+    "autograd::engine::evaluate_function: _AttentionBackward",
+    "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+    "detach",
+    "sdaa::empty.memory_format",
+    "sdaa::empty_strided",
+    "torch::autograd::AccumulateGrad"
+   ],
+   "sampling_cpu_fallback": false,
+   "timing_scope": "Diagnostic synchronized calls with CPU profiling, not a performance qualification",
+   "passed": true
+  },
+  {
+   "name": "multi_scale_channel_tail",
+   "sizes": [
+    [
+     4,
+     3
+    ],
+    [
+     2,
+     2
+    ],
+    [
+     1,
+     1
+    ]
+   ],
+   "batch": 2,
+   "heads": 3,
+   "channels": 19,
+   "queries": 11,
+   "points": 5,
+   "comparisons": {
+    "output": {
+     "passed": true,
+     "max_abs_error": 9.5367431640625e-07,
+     "max_tolerance_ratio": 0.022958096116781235
+    },
+    "value_gradient": {
+     "passed": true,
+     "max_abs_error": 1.9073486328125e-06,
+     "max_tolerance_ratio": 0.04652480036020279
+    },
+    "location_gradient": {
+     "passed": true,
+     "max_abs_error": 0.0,
+     "max_tolerance_ratio": 0.0
+    },
+    "weight_gradient": {
+     "passed": true,
+     "max_abs_error": 1.9073486328125e-06,
+     "max_tolerance_ratio": 0.01876412145793438
+    }
+   },
+   "forward_seconds": 0.0015652142465114594,
+   "backward_seconds": 0.0009304406121373177,
+   "profiler_event_names": [
+    "_Attention",
+    "_AttentionBackward",
+    "aten::detach",
+    "aten::empty",
+    "aten::empty_like",
+    "aten::empty_strided",
+    "aten::resolve_conj",
+    "aten::resolve_neg",
+    "aten::to",
+    "autograd::engine::evaluate_function: _AttentionBackward",
+    "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+    "detach",
+    "sdaa::empty.memory_format",
+    "sdaa::empty_strided",
+    "torch::autograd::AccumulateGrad"
+   ],
+   "sampling_cpu_fallback": false,
+   "timing_scope": "Diagnostic synchronized calls with CPU profiling, not a performance qualification",
+   "passed": true
+  },
+  {
+   "name": "many_levels",
+   "sizes": [
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ],
+    [
+     1,
+     2
+    ]
+   ],
+   "batch": 1,
+   "heads": 1,
+   "channels": 1,
+   "queries": 5,
+   "points": 3,
+   "comparisons": {
+    "output": {
+     "passed": true,
+     "max_abs_error": 5.960464477539062e-07,
+     "max_tolerance_ratio": 0.010806184262037277
+    },
+    "value_gradient": {
+     "passed": true,
+     "max_abs_error": 2.384185791015625e-07,
+     "max_tolerance_ratio": 0.005713346879929304
+    },
+    "location_gradient": {
+     "passed": true,
+     "max_abs_error": 0.0,
+     "max_tolerance_ratio": 0.0
+    },
+    "weight_gradient": {
+     "passed": true,
+     "max_abs_error": 1.1920928955078125e-07,
+     "max_tolerance_ratio": 0.003510737558826804
+    }
+   },
+   "forward_seconds": 0.0012674974277615547,
+   "backward_seconds": 0.0010102102532982826,
+   "profiler_event_names": [
+    "_Attention",
+    "_AttentionBackward",
+    "aten::detach",
+    "aten::empty",
+    "aten::empty_like",
+    "aten::empty_strided",
+    "aten::resolve_conj",
+    "aten::resolve_neg",
+    "aten::to",
+    "autograd::engine::evaluate_function: _AttentionBackward",
+    "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+    "detach",
+    "sdaa::empty.memory_format",
+    "sdaa::empty_strided",
+    "torch::autograd::AccumulateGrad"
+   ],
+   "sampling_cpu_fallback": false,
+   "timing_scope": "Diagnostic synchronized calls with CPU profiling, not a performance qualification",
+   "passed": true
+  },
+  {
+   "name": "encoder_shape",
+   "sizes": [
+    [
+     23,
+     29
+    ]
+   ],
+   "batch": 1,
+   "heads": 8,
+   "channels": 32,
+   "queries": 667,
+   "points": 4,
+   "comparisons": {
+    "output": {
+     "passed": true,
+     "max_abs_error": 1.430511474609375e-06,
+     "max_tolerance_ratio": 0.019828882068395615
+    },
+    "value_gradient": {
+     "passed": true,
+     "max_abs_error": 9.5367431640625e-07,
+     "max_tolerance_ratio": 0.024044163525104523
+    },
+    "location_gradient": {
+     "passed": true,
+     "max_abs_error": 0.0,
+     "max_tolerance_ratio": 0.0
+    },
+    "weight_gradient": {
+     "passed": true,
+     "max_abs_error": 3.814697265625e-06,
+     "max_tolerance_ratio": 0.06551973521709442
+    }
+   },
+   "forward_seconds": 0.004255987703800201,
+   "backward_seconds": 0.007999908179044724,
+   "profiler_event_names": [
+    "_Attention",
+    "_AttentionBackward",
+    "aten::detach",
+    "aten::empty",
+    "aten::empty_like",
+    "aten::empty_strided",
+    "aten::resolve_conj",
+    "aten::resolve_neg",
+    "aten::to",
+    "autograd::engine::evaluate_function: _AttentionBackward",
+    "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+    "detach",
+    "sdaa::empty.memory_format",
+    "sdaa::empty_strided",
+    "torch::autograd::AccumulateGrad"
+   ],
+   "sampling_cpu_fallback": false,
+   "timing_scope": "Diagnostic synchronized calls with CPU profiling, not a performance qualification",
+   "passed": true
+  },
+  {
+   "name": "decoder_shape",
+   "sizes": [
+    [
+     23,
+     29
+    ]
+   ],
+   "batch": 2,
+   "heads": 8,
+   "channels": 32,
+   "queries": 300,
+   "points": 4,
+   "comparisons": {
+    "output": {
+     "passed": true,
+     "max_abs_error": 1.430511474609375e-06,
+     "max_tolerance_ratio": 0.023105768486857414
+    },
+    "value_gradient": {
+     "passed": true,
+     "max_abs_error": 9.5367431640625e-07,
+     "max_tolerance_ratio": 0.015297492034733295
+    },
+    "location_gradient": {
+     "passed": true,
+     "max_abs_error": 0.0,
+     "max_tolerance_ratio": 0.0
+    },
+    "weight_gradient": {
+     "passed": true,
+     "max_abs_error": 4.76837158203125e-06,
+     "max_tolerance_ratio": 0.07360950112342834
+    }
+   },
+   "forward_seconds": 0.002202557399868965,
+   "backward_seconds": 0.005619603209197521,
+   "profiler_event_names": [
+    "_Attention",
+    "_AttentionBackward",
+    "aten::detach",
+    "aten::empty",
+    "aten::empty_like",
+    "aten::empty_strided",
+    "aten::resolve_conj",
+    "aten::resolve_neg",
+    "aten::to",
+    "autograd::engine::evaluate_function: _AttentionBackward",
+    "autograd::engine::evaluate_function: torch::autograd::AccumulateGrad",
+    "detach",
+    "sdaa::empty.memory_format",
+    "sdaa::empty_strided",
+    "torch::autograd::AccumulateGrad"
+   ],
+   "sampling_cpu_fallback": false,
+   "timing_scope": "Diagnostic synchronized calls with CPU profiling, not a performance qualification",
+   "passed": true
+  }
+ ],
+ "official_accuracy_measured": false,
+ "performance_qualified": false,
+ "source_sha256": "2858ea6161cf2faec6a52f3fe1895cf80e8b8d2e65fedb298324f493a1c39d69",
+ "compile_command": [
+  "tecocc",
+  "-O2",
+  "-std=c++17",
+  "-ffp-contract=off",
+  "-fno-strict-aliasing",
+  "-fPIC",
+  "-shared",
+  "-fvisibility=hidden",
+  "--sdaa-link",
+  "-fuse-ld=lld",
+  "--sdaa-device-lib=/tecogpfs/teco-ops/thirdparty/teco-hal/lib/teco_hal.bc",
+  "candidate/native_deform_attention.scpp",
+  "-o",
+  "candidate/libdetr_attention.so"
+ ],
+ "compile_exit_code": 0,
+ "binary_sha256": "cb1919722232768261f33a05cae32561997b49433049a2c3c34d85e7f4c8c60b",
+ "calls": {
+  "forward": 5,
+  "backward": 5
+ }
+}

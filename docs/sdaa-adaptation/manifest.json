@@ -1,0 +1,42 @@
+{
+  "pretrained_sha256": "d442fb2365d6e9640347b2b38686089d13cd55a5c3790d63e3602d079791fed1",
+  "annotation_sha256": {
+    "train": "e511d3a0e39f45162887e4d9f0bed63bf8f01e4c421d965445185b72990f1ab5",
+    "val": "14edfb83a2525773c9e5b6e6d4bfa57a866de1cb3ca164c46afe0ac97629b561"
+  },
+  "seed": 20261007,
+  "batch_size": 2,
+  "workers": 2,
+  "lr": 2e-05,
+  "lr_backbone": 2e-06,
+  "epochs": 20,
+  "parameters": 34048603,
+  "native_binary_sha256": "cb1919722232768261f33a05cae32561997b49433049a2c3c34d85e7f4c8c60b",
+  "mode": "train",
+  "project": "/gpfs/detr-feasibility-20261006/20261007T170056Z_competition_prepare_probe/project",
+  "output": "/gpfs/detr-train-run1",
+  "train_images": 5011,
+  "validation_images": 4952,
+  "optimizer_group_sizes": [
+    10395801,
+    23232512,
+    197890
+  ],
+  "trainable_parameters": 33826203,
+  "optimizer_parameter_coverage_verified": true,
+  "drop_last": true,
+  "completed_epochs": 20,
+  "official_accuracy_measured": true,
+  "device_work_submitted": true,
+  "formal_score_awarded": false,
+  "class_head_sha256": {
+    "class_embed.0.weight": "b1526a87de5ca160bc81fa108270d72d896e84ac2b485617e35496c00f82910c",
+    "class_embed.0.bias": "1d99fbcb30aaba660c492a7a1c61f2c5b84114a190190da669e3d59ced17523e"
+  },
+  "ap_50_95": 0.6000407936429826,
+  "reaches_documented_baseline": true,
+  "native_calls": {
+    "forward": 720048,
+    "backward": 601200
+  }
+}
